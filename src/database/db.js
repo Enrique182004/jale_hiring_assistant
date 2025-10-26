@@ -1,302 +1,36 @@
 import Dexie from 'dexie';
 
-export class JaleDatabase extends Dexie {
-  constructor() {
-    super('JaleHiringDB');
-    
-    // Version 3 with new tables for enhanced features
-    this.version(3).stores({
-      // Existing tables
-      users: '++id, email, userType, name, location, createdAt',
-      jobs: '++id, employerId, title, location, status, createdAt',
-      matches: '++id, jobId, workerId, status, matchScore, createdAt, notificationRead',
-      interviews: '++id, matchId, scheduledAt, status, jitsiRoomName, createdAt',
-      messages: '++id, matchId, senderId, timestamp, read',
-      chatHistory: '++id, matchId, userId, timestamp',
-      jobImages: '++id, jobId, userId, imageType, imageUrl, caption, createdAt',
-      quotes: '++id, jobId, workerId, amount, description, status, createdAt',
-      reviews: '++id, jobId, reviewerId, revieweeId, rating, comment, createdAt',
-      
-      // New tables for enhanced features
-      jobProgress: '++id, jobId, milestoneId, status, photos, notes, completedDate, approvedBy, createdAt',
-      payments: '++id, jobId, workerId, employerId, amount, status, type, method, createdAt',
-      escrow: '++id, paymentId, amount, status, releaseCondition, releaseDate, createdAt',
-      transactions: '++id, userId, amount, type, status, reference, createdAt',
-      portfolioProjects: '++id, workerId, title, description, beforePhotos, afterPhotos, completedDate, category, tags',
-      documents: '++id, userId, jobId, type, fileName, fileUrl, uploadDate, tags',
-      notifications: '++id, userId, type, title, message, read, link, createdAt',
-      workerFavorites: '++id, employerId, workerId, createdAt',
-      searchHistory: '++id, userId, query, filters, timestamp'
-    });
+// Initialize Dexie database
+export const db = new Dexie('JaleDatabase');
 
-    this.users = this.table('users');
-    this.jobs = this.table('jobs');
-    this.matches = this.table('matches');
-    this.interviews = this.table('interviews');
-    this.messages = this.table('messages');
-    this.chatHistory = this.table('chatHistory');
-    this.jobImages = this.table('jobImages');
-    this.quotes = this.table('quotes');
-    this.reviews = this.table('reviews');
-    this.jobProgress = this.table('jobProgress');
-    this.payments = this.table('payments');
-    this.escrow = this.table('escrow');
-    this.transactions = this.table('transactions');
-    this.portfolioProjects = this.table('portfolioProjects');
-    this.documents = this.table('documents');
-    this.notifications = this.table('notifications');
-    this.workerFavorites = this.table('workerFavorites');
-    this.searchHistory = this.table('searchHistory');
-  }
-}
+// Define database schema
+db.version(1).stores({
+  users: '++id, email, userType, location, createdAt',
+  jobs: '++id, employerId, status, createdAt',
+  matches: '++id, jobId, workerId, status, createdAt',
+  messages: '++id, matchId, senderId, timestamp',
+  interviews: '++id, matchId, scheduledAt, status',
+  quotes: '++id, jobId, workerId, status, createdAt',
+  reviews: '++id, jobId, reviewerId, revieweeId, createdAt',
+  jobImages: '++id, jobId, userId, imageType, createdAt',
+  jobProgress: '++id, jobId, milestoneId, status, createdAt',
+  notifications: '++id, userId, type, read, timestamp'
+});
 
-export const db = new JaleDatabase();
-
-// Seed some demo data
-export const seedDatabase = async () => {
-  const userCount = await db.users.count();
-  
-  if (userCount === 0) {
-    console.log('Seeding database with demo data...');
-    
-    // Add demo employer
-    const employerId = await db.users.add({
-      email: 'employer@demo.com',
-      password: 'demo123',
-      userType: 'employer',
-      name: 'ABC Construction Co.',
-      location: 'Los Angeles, CA',
-      company: 'ABC Construction',
-      skillsNeeded: ['Plumbing', 'Electrical', 'Carpentry'],
-      availability: '8:00 AM - 5:00 PM',
-      pay: '$25-35/hr',
-      createdAt: new Date()
-    });
-
-    // Add demo workers
-    const workerId1 = await db.users.add({
-      email: 'worker@demo.com',
-      password: 'demo123',
-      userType: 'worker',
-      name: 'John Martinez',
-      location: 'Los Angeles, CA',
-      skillsOffered: ['Plumbing', 'Electrical'],
-      availability: '7:00 AM - 6:00 PM',
-      pay: '$30/hr',
-      createdAt: new Date()
-    });
-
-    const workerId2 = await db.users.add({
-      email: 'worker2@demo.com',
-      password: 'demo123',
-      userType: 'worker',
-      name: 'Maria Rodriguez',
-      location: 'Los Angeles, CA',
-      skillsOffered: ['Carpentry', 'Painting'],
-      availability: '8:00 AM - 5:00 PM',
-      pay: '$28/hr',
-      createdAt: new Date()
-    });
-
-    const workerId3 = await db.users.add({
-      email: 'worker3@demo.com',
-      password: 'demo123',
-      userType: 'worker',
-      name: 'David Chen',
-      location: 'Los Angeles, CA',
-      skillsOffered: ['Electrical', 'HVAC'],
-      availability: '9:00 AM - 6:00 PM',
-      pay: '$35/hr',
-      createdAt: new Date()
-    });
-
-    // Add demo jobs
-    const jobId1 = await db.jobs.add({
-      employerId: employerId,
-      title: 'Residential Plumbing Repair',
-      description: 'Fix leaking pipes in kitchen and bathroom. Need experienced plumber.',
-      location: 'Los Angeles, CA',
-      skillsNeeded: ['Plumbing'],
-      availability: '9:00 AM - 5:00 PM',
-      pay: '$30-35/hr',
-      status: 'active',
-      createdAt: new Date()
-    });
-
-    const jobId2 = await db.jobs.add({
-      employerId: employerId,
-      title: 'Kitchen Remodel - Electrical Work',
-      description: 'Rewire kitchen for new appliances and lighting',
-      location: 'Los Angeles, CA',
-      skillsNeeded: ['Electrical'],
-      availability: 'Flexible',
-      pay: '$35-40/hr',
-      status: 'active',
-      createdAt: new Date(Date.now() - 2 * 24 * 60 * 60 * 1000) // 2 days ago
-    });
-
-    // Add demo job images
-    await db.jobImages.add({
-      jobId: jobId1,
-      userId: employerId,
-      imageType: 'damage',
-      imageUrl: 'https://via.placeholder.com/400x300?text=Leaking+Pipe',
-      caption: 'Leaking pipe under kitchen sink',
-      createdAt: new Date()
-    });
-
-    await db.jobImages.add({
-      jobId: jobId1,
-      userId: employerId,
-      imageType: 'damage',
-      imageUrl: 'https://via.placeholder.com/400x300?text=Water+Damage',
-      caption: 'Water damage on cabinet floor',
-      createdAt: new Date()
-    });
-
-    // Add demo matches
-    const matchId1 = await db.matches.add({
-      jobId: jobId1,
-      workerId: workerId1,
-      status: 'accepted',
-      matchScore: 95,
-      notificationRead: true,
-      createdAt: new Date(Date.now() - 1 * 24 * 60 * 60 * 1000)
-    });
-
-    await db.matches.add({
-      jobId: jobId2,
-      workerId: workerId3,
-      status: 'pending',
-      matchScore: 88,
-      notificationRead: false,
-      createdAt: new Date()
-    });
-
-    // Add demo quotes
-    await db.quotes.add({
-      jobId: jobId1,
-      workerId: workerId1,
-      amount: 450.00,
-      materialsCost: 150.00,
-      laborCost: 300.00,
-      estimatedDuration: '4-5 hours',
-      description: 'Will replace damaged pipes and fix the leak. Includes all materials and labor.',
-      status: 'accepted',
-      createdAt: new Date(Date.now() - 12 * 60 * 60 * 1000) // 12 hours ago
-    });
-
-    await db.quotes.add({
-      jobId: jobId2,
-      workerId: workerId3,
-      amount: 850.00,
-      materialsCost: 300.00,
-      laborCost: 550.00,
-      estimatedDuration: '2 days',
-      description: 'Complete kitchen electrical rewiring including new circuit breaker panel',
-      status: 'pending',
-      createdAt: new Date(Date.now() - 2 * 60 * 60 * 1000) // 2 hours ago
-    });
-
-    // Add demo review
-    await db.reviews.add({
-      jobId: jobId1,
-      reviewerId: employerId,
-      revieweeId: workerId1,
-      rating: 5,
-      comment: 'Excellent work! Very professional and completed the job on time. Would definitely hire again.',
-      categories: {
-        quality: 5,
-        communication: 5,
-        timeliness: 5,
-        professionalism: 5
-      },
-      createdAt: new Date(Date.now() - 7 * 24 * 60 * 60 * 1000) // 1 week ago
-    });
-
-    // Add demo messages
-    await db.messages.add({
-      matchId: matchId1,
-      senderId: 'ai',
-      message: "Hi John! I'm Jale's AI assistant. I found a great opportunity that matches your skills!\n\n📍 Location: Los Angeles, CA\n💰 Pay: $30-35/hr\n🕐 Hours: 9:00 AM - 5:00 PM\n📋 Skills needed: Plumbing\n\nBased on your profile, you're a 95% match for this role!\n\nWould you like to know more about this position?",
-      timestamp: new Date(Date.now() - 24 * 60 * 60 * 1000),
-      read: true
-    });
-
-    await db.messages.add({
-      matchId: matchId1,
-      senderId: workerId1,
-      message: "Yes, I'm interested! Can you tell me more about the scope of work?",
-      timestamp: new Date(Date.now() - 23 * 60 * 60 * 1000),
-      read: true
-    });
-
-    await db.messages.add({
-      matchId: matchId1,
-      senderId: employerId,
-      message: "Great! We have a leaking pipe under the kitchen sink that needs repair. There's also some water damage to the cabinet that might need attention. When would you be available?",
-      timestamp: new Date(Date.now() - 22 * 60 * 60 * 1000),
-      read: true
-    });
-
-    // Add demo job progress
-    await db.jobProgress.add({
-      jobId: jobId1,
-      milestoneId: 1,
-      status: 'completed',
-      photos: ['https://via.placeholder.com/400x300?text=Work+Started'],
-      notes: 'Started work at 9 AM. Assessed the damage and created a repair plan.',
-      completedDate: new Date(Date.now() - 5 * 60 * 60 * 1000),
-      approvedBy: employerId,
-      createdAt: new Date(Date.now() - 5 * 60 * 60 * 1000)
-    });
-
-    await db.jobProgress.add({
-      jobId: jobId1,
-      milestoneId: 2,
-      status: 'completed',
-      photos: ['https://via.placeholder.com/400x300?text=Materials'],
-      notes: 'Purchased all necessary materials from local supplier',
-      completedDate: new Date(Date.now() - 4 * 60 * 60 * 1000),
-      approvedBy: employerId,
-      createdAt: new Date(Date.now() - 4 * 60 * 60 * 1000)
-    });
-
-    // Add demo portfolio project
-    await db.portfolioProjects.add({
-      workerId: workerId1,
-      title: 'Commercial Building Plumbing Overhaul',
-      description: 'Complete plumbing system replacement for a 3-story office building',
-      beforePhotos: ['https://via.placeholder.com/400x300?text=Before+1', 'https://via.placeholder.com/400x300?text=Before+2'],
-      afterPhotos: ['https://via.placeholder.com/400x300?text=After+1', 'https://via.placeholder.com/400x300?text=After+2'],
-      completedDate: new Date(Date.now() - 30 * 24 * 60 * 60 * 1000),
-      category: 'Plumbing',
-      tags: ['commercial', 'plumbing', 'renovation']
-    });
-
-    console.log('Database seeded successfully!');
-  }
-};
-
-// Helper function to generate unique Jitsi room name
-export const generateJitsiRoomName = (matchId) => {
-  const timestamp = Date.now();
-  return `JaleInterview${matchId}${timestamp}`;
-};
-
-// Helper function to upload image (would connect to actual storage in production)
+// Utility function to upload images (converts file to base64)
 export const uploadImage = async (file, jobId, userId, imageType) => {
-  // In production, this would upload to cloud storage (S3, Firebase, etc.)
-  // For now, we'll use a data URL
   return new Promise((resolve, reject) => {
     const reader = new FileReader();
+    
     reader.onload = async (e) => {
       try {
         const imageId = await db.jobImages.add({
           jobId,
           userId,
-          imageType, // 'setup', 'during', 'completed', 'damage', 'issue', 'progress', 'initial'
+          imageType,
           imageUrl: e.target.result,
+          fileName: file.name,
+          fileSize: file.size,
           caption: file.name,
           createdAt: new Date()
         });
@@ -305,81 +39,582 @@ export const uploadImage = async (file, jobId, userId, imageType) => {
         reject(error);
       }
     };
-    reader.onerror = reject;
+    
+    reader.onerror = () => reject(new Error('Failed to read file'));
     reader.readAsDataURL(file);
   });
 };
 
-// Helper function to create notification
-export const createNotification = async (userId, type, title, message, link = null) => {
-  await db.notifications.add({
-    userId,
-    type, // 'new_quote', 'interview_scheduled', 'message_received', 'worker_accepted', 'payment_required', etc.
-    title,
-    message,
-    read: false,
-    link,
-    createdAt: new Date()
-  });
+// Generate unique Jitsi room name
+export const generateJitsiRoomName = (matchId) => {
+  return `jale-interview-${matchId}-${Date.now()}`;
 };
 
-// Helper function to mark notification as read
-export const markNotificationAsRead = async (notificationId) => {
-  await db.notifications.update(notificationId, { read: true });
-};
+// Seed database with demo data
+export const seedDatabase = async () => {
+  try {
+    // Check if database is already seeded
+    const userCount = await db.users.count();
+    if (userCount > 0) {
+      console.log('Database already seeded');
+      return;
+    }
 
-// Helper function to get unread notifications count
-export const getUnreadNotificationsCount = async (userId) => {
-  const count = await db.notifications
-    .where({ userId, read: false })
-    .count();
-  return count;
-};
+    console.log('Seeding database with demo data...');
 
-// Helper function to add worker to favorites
-export const addWorkerToFavorites = async (employerId, workerId) => {
-  const existing = await db.workerFavorites
-    .where({ employerId, workerId })
-    .first();
-  
-  if (!existing) {
-    await db.workerFavorites.add({
-      employerId,
-      workerId,
-      createdAt: new Date()
-    });
+    // Demo Users - Employers
+    const employers = await db.users.bulkAdd([
+      {
+        email: 'employer@demo.com',
+        password: 'demo123',
+        name: 'Home Improvement Solutions',
+        userType: 'employer',
+        company: 'Home Improvement Solutions',
+        location: 'El Paso, TX',
+        pay: '$25-40/hr',
+        availability: '7:00 AM - 6:00 PM',
+        skillsNeeded: ['Plumbing', 'Electrical', 'Carpentry'],
+        createdAt: new Date('2024-01-15')
+      },
+      {
+        email: 'construction@demo.com',
+        password: 'demo123',
+        name: 'ABC Construction Co.',
+        userType: 'employer',
+        company: 'ABC Construction Co.',
+        location: 'Las Cruces, NM',
+        pay: '$30-45/hr',
+        availability: '6:00 AM - 4:00 PM',
+        skillsNeeded: ['Construction', 'Welding', 'Heavy Equipment'],
+        createdAt: new Date('2024-01-20')
+      },
+      {
+        email: 'property@demo.com',
+        password: 'demo123',
+        name: 'Sunset Property Management',
+        userType: 'employer',
+        company: 'Sunset Property Management',
+        location: 'El Paso, TX',
+        pay: '$20-35/hr',
+        availability: 'Flexible',
+        skillsNeeded: ['Maintenance', 'HVAC', 'Painting'],
+        createdAt: new Date('2024-02-01')
+      },
+      {
+        email: 'remodel@demo.com',
+        password: 'demo123',
+        name: 'Elite Remodeling',
+        userType: 'employer',
+        company: 'Elite Remodeling',
+        location: 'Albuquerque, NM',
+        pay: '$35-50/hr',
+        availability: 'Monday-Friday',
+        skillsNeeded: ['Carpentry', 'Drywall', 'Tile Work'],
+        createdAt: new Date('2024-02-10')
+      }
+    ], { allKeys: true });
+
+    // Demo Users - Workers
+    const workers = await db.users.bulkAdd([
+      {
+        email: 'worker@demo.com',
+        password: 'demo123',
+        name: 'Carlos Martinez',
+        userType: 'worker',
+        location: 'El Paso, TX',
+        pay: '$25-35/hr',
+        availability: '7:00 AM - 5:00 PM',
+        skillsOffered: ['Plumbing', 'General Maintenance', 'Repair Work'],
+        experience: '8 years',
+        certifications: ['Licensed Plumber', 'OSHA 10'],
+        averageRating: 4.8,
+        totalReviews: 24,
+        createdAt: new Date('2024-01-10')
+      },
+      {
+        email: 'juan@demo.com',
+        password: 'demo123',
+        name: 'Juan Rodriguez',
+        userType: 'worker',
+        location: 'El Paso, TX',
+        pay: '$30-40/hr',
+        availability: '6:00 AM - 6:00 PM',
+        skillsOffered: ['Electrical', 'Solar Installation', 'Wiring'],
+        experience: '12 years',
+        certifications: ['Master Electrician', 'Solar PV Installer'],
+        averageRating: 4.9,
+        totalReviews: 31,
+        createdAt: new Date('2024-01-12')
+      },
+      {
+        email: 'maria@demo.com',
+        password: 'demo123',
+        name: 'Maria Gonzalez',
+        userType: 'worker',
+        location: 'Las Cruces, NM',
+        pay: '$28-38/hr',
+        availability: 'Flexible',
+        skillsOffered: ['Carpentry', 'Cabinet Making', 'Finish Work'],
+        experience: '10 years',
+        certifications: ['Journeyman Carpenter'],
+        averageRating: 4.7,
+        totalReviews: 19,
+        createdAt: new Date('2024-01-18')
+      },
+      {
+        email: 'roberto@demo.com',
+        password: 'demo123',
+        name: 'Roberto Sanchez',
+        userType: 'worker',
+        location: 'El Paso, TX',
+        pay: '$35-45/hr',
+        availability: '7:00 AM - 4:00 PM',
+        skillsOffered: ['Welding', 'Metal Fabrication', 'Construction'],
+        experience: '15 years',
+        certifications: ['Certified Welder (AWS)', 'Structural Welding'],
+        averageRating: 5.0,
+        totalReviews: 28,
+        createdAt: new Date('2024-01-22')
+      },
+      {
+        email: 'luis@demo.com',
+        password: 'demo123',
+        name: 'Luis Hernandez',
+        userType: 'worker',
+        location: 'El Paso, TX',
+        pay: '$22-32/hr',
+        availability: '8:00 AM - 5:00 PM',
+        skillsOffered: ['HVAC', 'Air Conditioning', 'Heating Systems'],
+        experience: '6 years',
+        certifications: ['EPA 608 Universal', 'HVAC Excellence'],
+        averageRating: 4.6,
+        totalReviews: 15,
+        createdAt: new Date('2024-01-25')
+      },
+      {
+        email: 'miguel@demo.com',
+        password: 'demo123',
+        name: 'Miguel Torres',
+        userType: 'worker',
+        location: 'Las Cruces, NM',
+        pay: '$20-30/hr',
+        availability: 'Weekdays',
+        skillsOffered: ['Painting', 'Drywall', 'Interior Finishing'],
+        experience: '5 years',
+        certifications: [],
+        averageRating: 4.5,
+        totalReviews: 12,
+        createdAt: new Date('2024-02-01')
+      },
+      {
+        email: 'jose@demo.com',
+        password: 'demo123',
+        name: 'Jose Ramirez',
+        userType: 'worker',
+        location: 'Albuquerque, NM',
+        pay: '$25-35/hr',
+        availability: 'Monday-Saturday',
+        skillsOffered: ['Roofing', 'Construction', 'General Labor'],
+        experience: '7 years',
+        certifications: ['OSHA 30', 'Fall Protection'],
+        averageRating: 4.7,
+        totalReviews: 20,
+        createdAt: new Date('2024-02-05')
+      },
+      {
+        email: 'ana@demo.com',
+        password: 'demo123',
+        name: 'Ana Lopez',
+        userType: 'worker',
+        location: 'El Paso, TX',
+        pay: '$30-40/hr',
+        availability: 'Flexible',
+        skillsOffered: ['Tile Work', 'Flooring', 'Bathroom Remodeling'],
+        experience: '9 years',
+        certifications: ['Tile Setter Certification'],
+        averageRating: 4.9,
+        totalReviews: 22,
+        createdAt: new Date('2024-02-08')
+      }
+    ], { allKeys: true });
+
+    // Demo Jobs
+    const jobs = await db.jobs.bulkAdd([
+      {
+        employerId: employers[0],
+        title: 'Kitchen Plumbing Renovation',
+        description: 'Need experienced plumber for complete kitchen renovation. Includes installing new sink, dishwasher lines, and garbage disposal. Professional and reliable worker required.',
+        location: 'El Paso, TX',
+        pay: '$30-35/hr',
+        availability: 'Monday-Friday, 8:00 AM - 4:00 PM',
+        skillsNeeded: ['Plumbing', 'Pipe Fitting'],
+        status: 'active',
+        jobType: 'Short-term',
+        estimatedDuration: '3-4 days',
+        createdAt: new Date('2024-10-15')
+      },
+      {
+        employerId: employers[0],
+        title: 'Electrical Panel Upgrade',
+        description: 'Looking for licensed electrician to upgrade main electrical panel from 100A to 200A. Must have experience with residential electrical work and proper licensing.',
+        location: 'El Paso, TX',
+        pay: '$40-45/hr',
+        availability: 'Flexible scheduling',
+        skillsNeeded: ['Electrical', 'Licensed Electrician'],
+        status: 'active',
+        jobType: 'Short-term',
+        estimatedDuration: '2 days',
+        createdAt: new Date('2024-10-18')
+      },
+      {
+        employerId: employers[1],
+        title: 'Commercial Building Construction',
+        description: 'Large commercial construction project needs skilled welders and general laborers. Long-term project with potential for permanent position. Must pass drug test.',
+        location: 'Las Cruces, NM',
+        pay: '$32-42/hr',
+        availability: '6:00 AM - 4:00 PM, Monday-Saturday',
+        skillsNeeded: ['Welding', 'Construction', 'Heavy Equipment'],
+        status: 'active',
+        jobType: 'Long-term',
+        estimatedDuration: '6 months',
+        createdAt: new Date('2024-10-12')
+      },
+      {
+        employerId: employers[2],
+        title: 'Multi-Unit HVAC Maintenance',
+        description: 'Property management company needs HVAC technician for ongoing maintenance of 50+ rental units. Regular work available, competitive pay.',
+        location: 'El Paso, TX',
+        pay: '$28-35/hr',
+        availability: 'Flexible, on-call basis',
+        skillsNeeded: ['HVAC', 'Air Conditioning', 'Maintenance'],
+        status: 'active',
+        jobType: 'Ongoing',
+        estimatedDuration: 'Ongoing',
+        createdAt: new Date('2024-10-20')
+      },
+      {
+        employerId: employers[2],
+        title: 'Apartment Complex Painting',
+        description: 'Need professional painter for interior painting of multiple apartments. Must provide own equipment. Experience with rental properties preferred.',
+        location: 'El Paso, TX',
+        pay: '$22-28/hr',
+        availability: 'Weekdays',
+        skillsNeeded: ['Painting', 'Interior Work'],
+        status: 'active',
+        jobType: 'Short-term',
+        estimatedDuration: '2-3 weeks',
+        createdAt: new Date('2024-10-22')
+      },
+      {
+        employerId: employers[3],
+        title: 'Custom Cabinet Installation',
+        description: 'High-end residential remodel requires skilled carpenter for custom cabinet installation. Attention to detail critical. Premium pay for quality work.',
+        location: 'Albuquerque, NM',
+        pay: '$38-48/hr',
+        availability: 'Monday-Friday',
+        skillsNeeded: ['Carpentry', 'Cabinet Making', 'Finish Work'],
+        status: 'active',
+        jobType: 'Short-term',
+        estimatedDuration: '1-2 weeks',
+        createdAt: new Date('2024-10-19')
+      },
+      {
+        employerId: employers[3],
+        title: 'Bathroom Tile Work',
+        description: 'Looking for experienced tile setter for luxury bathroom remodel. Includes floor and wall tile, shower installation. Portfolio required.',
+        location: 'Albuquerque, NM',
+        pay: '$35-42/hr',
+        availability: 'Flexible',
+        skillsNeeded: ['Tile Work', 'Bathroom Remodeling'],
+        status: 'active',
+        jobType: 'Short-term',
+        estimatedDuration: '5-7 days',
+        createdAt: new Date('2024-10-21')
+      },
+      {
+        employerId: employers[0],
+        title: 'Deck Construction',
+        description: 'Build outdoor deck (20x30) with composite materials. Must have carpentry experience and ability to work with plans.',
+        location: 'El Paso, TX',
+        pay: '$30-38/hr',
+        availability: 'Weekends or evenings',
+        skillsNeeded: ['Carpentry', 'Construction'],
+        status: 'active',
+        jobType: 'Short-term',
+        estimatedDuration: '1 week',
+        createdAt: new Date('2024-10-23')
+      }
+    ], { allKeys: true });
+
+    // Demo Matches
+    const matches = await db.matches.bulkAdd([
+      {
+        jobId: jobs[0],
+        workerId: workers[0],
+        status: 'pending',
+        matchScore: 92,
+        createdAt: new Date('2024-10-16')
+      },
+      {
+        jobId: jobs[0],
+        workerId: workers[2],
+        status: 'rejected',
+        matchScore: 65,
+        createdAt: new Date('2024-10-16')
+      },
+      {
+        jobId: jobs[1],
+        workerId: workers[1],
+        status: 'accepted',
+        matchScore: 95,
+        createdAt: new Date('2024-10-19')
+      },
+      {
+        jobId: jobs[2],
+        workerId: workers[3],
+        status: 'hired',
+        matchScore: 88,
+        createdAt: new Date('2024-10-13')
+      },
+      {
+        jobId: jobs[3],
+        workerId: workers[4],
+        status: 'pending',
+        matchScore: 90,
+        createdAt: new Date('2024-10-21')
+      },
+      {
+        jobId: jobs[4],
+        workerId: workers[5],
+        status: 'quote_submitted',
+        matchScore: 85,
+        createdAt: new Date('2024-10-23')
+      },
+      {
+        jobId: jobs[5],
+        workerId: workers[2],
+        status: 'pending',
+        matchScore: 94,
+        createdAt: new Date('2024-10-20')
+      },
+      {
+        jobId: jobs[6],
+        workerId: workers[7],
+        status: 'interview_scheduled',
+        matchScore: 91,
+        createdAt: new Date('2024-10-22')
+      }
+    ], { allKeys: true });
+
+    // Demo Quotes
+    await db.quotes.bulkAdd([
+      {
+        jobId: jobs[0],
+        workerId: workers[0],
+        amount: 1250.00,
+        materialsCost: 450.00,
+        laborCost: 800.00,
+        estimatedDuration: '3 days',
+        description: 'Complete kitchen plumbing renovation including new fixtures, disposal installation, and all necessary connections. Materials include high-quality PVC and copper pipes, shutoff valves, and mounting hardware.',
+        status: 'pending',
+        createdAt: new Date('2024-10-16')
+      },
+      {
+        jobId: jobs[1],
+        workerId: workers[1],
+        amount: 2800.00,
+        materialsCost: 1200.00,
+        laborCost: 1600.00,
+        estimatedDuration: '2 days',
+        description: 'Electrical panel upgrade to 200A service. Includes new panel, breakers, grounding, and all labor. Will obtain necessary permits and schedule inspection.',
+        status: 'accepted',
+        createdAt: new Date('2024-10-19')
+      },
+      {
+        jobId: jobs[4],
+        workerId: workers[5],
+        amount: 3200.00,
+        materialsCost: 1500.00,
+        laborCost: 1700.00,
+        estimatedDuration: '2 weeks',
+        description: 'Interior painting of 8 apartments. Includes all prep work, two coats of premium paint, and cleanup. Paint colors per spec sheet.',
+        status: 'pending',
+        createdAt: new Date('2024-10-23')
+      },
+      {
+        jobId: jobs[6],
+        workerId: workers[7],
+        amount: 4500.00,
+        materialsCost: 2200.00,
+        laborCost: 2300.00,
+        estimatedDuration: '6 days',
+        description: 'Luxury bathroom tile installation. Premium porcelain tile for floors and walls, custom shower pan, and professional waterproofing. Includes all materials and expert installation.',
+        status: 'pending',
+        createdAt: new Date('2024-10-22')
+      }
+    ]);
+
+    // Demo Reviews
+    await db.reviews.bulkAdd([
+      {
+        jobId: jobs[2],
+        reviewerId: employers[1],
+        revieweeId: workers[3],
+        rating: 5,
+        comment: 'Roberto is an excellent welder! His work quality is outstanding and he completed the job ahead of schedule. Very professional and would definitely hire again.',
+        categories: {
+          quality: 5,
+          communication: 5,
+          timeliness: 5,
+          professionalism: 5
+        },
+        createdAt: new Date('2024-10-14')
+      },
+      {
+        jobId: jobs[0],
+        reviewerId: workers[0],
+        revieweeId: employers[0],
+        rating: 5,
+        comment: 'Great employer to work with! Clear communication, reasonable expectations, and paid on time. The job site was well organized and all materials were ready.',
+        categories: {
+          quality: 5,
+          communication: 5,
+          timeliness: 5,
+          professionalism: 5
+        },
+        createdAt: new Date('2024-10-17')
+      },
+      {
+        jobId: jobs[1],
+        reviewerId: workers[1],
+        revieweeId: employers[0],
+        rating: 5,
+        comment: 'Excellent project! Homeowner was very accommodating and understanding. Payment was prompt and the work environment was safe.',
+        categories: {
+          quality: 5,
+          communication: 5,
+          timeliness: 5,
+          professionalism: 5
+        },
+        createdAt: new Date('2024-10-20')
+      }
+    ]);
+
+    // Demo Interviews
+    await db.interviews.bulkAdd([
+      {
+        matchId: matches[2],
+        scheduledAt: new Date('2024-10-28T14:00:00'),
+        duration: 30,
+        notes: 'Discuss electrical panel upgrade project details and timeline',
+        status: 'scheduled',
+        jitsiRoomName: generateJitsiRoomName(matches[2]),
+        createdAt: new Date('2024-10-19')
+      },
+      {
+        matchId: matches[7],
+        scheduledAt: new Date('2024-10-27T10:00:00'),
+        duration: 45,
+        notes: 'Review tile work portfolio and discuss bathroom remodel project',
+        status: 'scheduled',
+        jitsiRoomName: generateJitsiRoomName(matches[7]),
+        createdAt: new Date('2024-10-22')
+      }
+    ]);
+
+    // Demo Messages
+    await db.messages.bulkAdd([
+      {
+        matchId: matches[2],
+        senderId: employers[0],
+        message: 'Hi Juan! I reviewed your profile and I\'m impressed with your electrical experience. Would you be available for a video interview this week?',
+        messageType: 'text',
+        timestamp: new Date('2024-10-19T09:00:00')
+      },
+      {
+        matchId: matches[2],
+        senderId: workers[1],
+        message: 'Hello! Thank you for reaching out. Yes, I would be happy to discuss the electrical panel upgrade. I have availability this week.',
+        messageType: 'text',
+        timestamp: new Date('2024-10-19T09:30:00')
+      },
+      {
+        matchId: matches[2],
+        senderId: 'system',
+        message: 'Interview scheduled for October 28, 2024 at 2:00 PM',
+        messageType: 'interview_scheduled',
+        timestamp: new Date('2024-10-19T10:00:00')
+      },
+      {
+        matchId: matches[7],
+        senderId: employers[3],
+        message: 'Hi Ana! Your tile work portfolio looks excellent. We have a luxury bathroom remodel project. Would you like to schedule an interview to discuss details?',
+        messageType: 'text',
+        timestamp: new Date('2024-10-22T11:00:00')
+      },
+      {
+        matchId: matches[7],
+        senderId: workers[7],
+        message: 'Thank you! I would love to learn more about the project. I\'m available most days this week.',
+        messageType: 'text',
+        timestamp: new Date('2024-10-22T11:20:00')
+      }
+    ]);
+
+    // Demo Notifications
+    await db.notifications.bulkAdd([
+      {
+        userId: employers[0],
+        type: 'new_quote',
+        title: 'New Quote Received',
+        message: 'Carlos Martinez submitted a quote of $1,250.00 for Kitchen Plumbing Renovation',
+        amount: 1250.00,
+        read: false,
+        timestamp: new Date('2024-10-16T10:30:00')
+      },
+      {
+        userId: employers[0],
+        type: 'message_received',
+        title: 'New Message',
+        message: 'Juan Rodriguez replied to your message',
+        read: false,
+        timestamp: new Date('2024-10-19T09:30:00')
+      },
+      {
+        userId: workers[1],
+        type: 'interview_scheduled',
+        title: 'Interview Scheduled',
+        message: 'Your interview for Electrical Panel Upgrade has been scheduled for Oct 28 at 2:00 PM',
+        read: false,
+        timestamp: new Date('2024-10-19T10:00:00')
+      },
+      {
+        userId: workers[0],
+        type: 'new_match',
+        title: 'New Job Match',
+        message: 'You have a new job match: Kitchen Plumbing Renovation (92% match)',
+        read: false,
+        timestamp: new Date('2024-10-16T08:00:00')
+      },
+      {
+        userId: workers[3],
+        type: 'worker_accepted',
+        title: 'Congratulations!',
+        message: 'You have been hired for Commercial Building Construction',
+        read: true,
+        timestamp: new Date('2024-10-13T15:00:00')
+      }
+    ]);
+
+    console.log('Database seeded successfully with demo data!');
+    console.log(`- ${employers.length} employers created`);
+    console.log(`- ${workers.length} workers created`);
+    console.log(`- ${jobs.length} jobs created`);
+    console.log(`- ${matches.length} matches created`);
+
+  } catch (error) {
+    console.error('Error seeding database:', error);
   }
 };
 
-// Helper function to remove worker from favorites
-export const removeWorkerFromFavorites = async (employerId, workerId) => {
-  const favorite = await db.workerFavorites
-    .where({ employerId, workerId })
-    .first();
-  
-  if (favorite) {
-    await db.workerFavorites.delete(favorite.id);
-  }
-};
-
-// Helper function to check if worker is favorited
-export const isWorkerFavorited = async (employerId, workerId) => {
-  const favorite = await db.workerFavorites
-    .where({ employerId, workerId })
-    .first();
-  return !!favorite;
-};
-
-// Export all helper functions
-export default {
-  db,
-  generateJitsiRoomName,
-  uploadImage,
-  createNotification,
-  markNotificationAsRead,
-  getUnreadNotificationsCount,
-  addWorkerToFavorites,
-  removeWorkerFromFavorites,
-  isWorkerFavorited,
-  seedDatabase
-};
+export default db;
