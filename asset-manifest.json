@@ -1,13 +1,13 @@
 {
   "files": {
     "main.css": "/jale_hiring_assistant/static/css/main.364dd8cd.css",
-    "main.js": "/jale_hiring_assistant/static/js/main.f4d89179.js",
+    "main.js": "/jale_hiring_assistant/static/js/main.7554404e.js",
     "index.html": "/jale_hiring_assistant/index.html",
     "main.364dd8cd.css.map": "/jale_hiring_assistant/static/css/main.364dd8cd.css.map",
-    "main.f4d89179.js.map": "/jale_hiring_assistant/static/js/main.f4d89179.js.map"
+    "main.7554404e.js.map": "/jale_hiring_assistant/static/js/main.7554404e.js.map"
   },
   "entrypoints": [
     "static/css/main.364dd8cd.css",
-    "static/js/main.f4d89179.js"
+    "static/js/main.7554404e.js"
   ]
 }
